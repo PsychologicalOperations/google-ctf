@@ -27,43 +27,43 @@ METHOD_STORE = 0
 
 # Local file header
 LFH_FMT = "<IHHHHHIIIHH"
-LFH_MAGIC = 0x04034b50
+LFH_MAGIC = 0x04034b50 # decimal: 67324752, binary: 100000000110100101101010000
 
 # Central directory file header
 CD_FMT = "<IHHHHHHIIIHHHHHII"
-CD_MAGIC = 0x02014b50
+CD_MAGIC = 0x02014b50 # decimal: 33639248, binary: 10000000010100101101010000
 
 # End of central directory record
 ECD_FMT = "<IHHHHIIH"
-ECD_MAGIC = 0x06054b50
+ECD_MAGIC = 0x06054b50 # decimal: 101010256, binary: 110000001010100101101010000
 
 # CRC, as used by ZIP files
 # adapted from CRC code in RFC 1952
-crc_table = [0] * 256
+crc_table = [0] * 256 # 256 empty places in array
 def make_crc_table():
     for i in range(256):
         c = i
         for j in range(8):
-            if (c & 1) != 0:
-                c = 0xedb88320 ^ (c >> 1)
+            if (c & 1) != 0: # if atleast one bit passes through
+                c = 0xedb88320 ^ (c >> 1) # decimal: 3988292384, binary: 11101101101110001000001100100000. xor with this number
             else:
-                c >>= 1
+                c >>= 1 # shift right by one bit to get that xor operation
         crc_table[i] = c
 make_crc_table()
 
 # update a crc with just one byte, without pre- and post-conditioning
 # for use only with the PKWARE cipher
 def update_crc1(crc, b):
-    return crc_table[(crc ^ b) & 0xff] ^ (crc >> 8)
+    return crc_table[(crc ^ b) & 0xff] ^ (crc >> 8) # 0xff -> decimal: 255, binary: 11111111. limit number to 255 with 0xff, why the fuck would you shift it??
 
 # update a crc given a buffer of bytes
 def update_crc(crc, buf):
-    crc ^= 0xffffffff
+    crc ^= 0xffffffff # decimal: 4294967295, binary: 11111111111111111111111111111111. another limit. 
 
     for b in buf:
-        crc = crc_table[(crc ^ b) & 0xff] ^ (crc >> 8)
+        crc = crc_table[(crc ^ b) & 0xff] ^ (crc >> 8) # 0xff -> decimal: 255,binary: 11111111. another limit. 
 
-    return crc ^ 0xffffffff
+    return crc ^ 0xffffffff # xor'd to change its size?
 
 # an implementation of the PKWARE cipher as described in APPNOTE.TXT
 class PKZIPCipher(object):
@@ -82,7 +82,7 @@ class PKZIPCipher(object):
 
     # return the next byte of keystream (without advancing it)
     def decrypt_byte(self):
-        temp = (self.key[2] | 2) & 0xffff
+        temp = (self.key[2] | 2) & 0xffff # 0xffff -> decimal: 65535,binary: 1111111111111111. anding to limit it again. 
         return ((temp * (temp ^ 1)) >> 8) & 0xff
 
     # decrypt a bytearray of data in-place
