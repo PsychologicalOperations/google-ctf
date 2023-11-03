@@ -75,8 +75,8 @@ class PKZIPCipher(object):
 
     # advance the keystream given a plaintext byte
     def update_keys(self, b):
-        self.key[0] = update_crc1(self.key[0], b)
-        self.key[1] = (self.key[1] + (self.key[0] & 0xff)) & 0xffffffff
+        self.key[0] = update_crc1(self.key[0], b) # dunno why so complicated but xoring it brings the original key back
+        self.key[1] = (self.key[1] + (self.key[0] & 0xff)) & 0xffffffff # ??? key keeps changing and doesnt reverse back to its original state??? wtf???
         self.key[1] = (self.key[1] * 134775813 + 1) & 0xffffffff
         self.key[2] = update_crc1(self.key[2], self.key[1] >> 24)
 
